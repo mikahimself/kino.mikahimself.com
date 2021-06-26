@@ -46,7 +46,6 @@ async function fetchTheatreAreas() {
     console.log(url)
     const resText = await res.text();
     const resJson = await JSON.parse(xmljs.xml2json(resText, {compact: true, spaces: 4}));
-    // console.log(resJson.Events.Event.ID._text)
     const event = {
       "eventId": resJson.Events.Event.ID._text,
       "title": resJson.Events.Event.Title._text,
@@ -63,11 +62,11 @@ async function fetchTheatreAreas() {
       "synopsis": resJson.Events.Event.Synopsis._text,
       "eventURL": resJson.Events.Event.EventURL._text,
       "images": {
-        "eventSmallImagePortrait": resJson.Events.Event.Images.EventSmallImagePortrait?._text,
-        "eventMediumImagePortrait": resJson.Events.Event.Images.EventMediumImagePortrait?._text,
-        "eventLargeImagePortrait": resJson.Events.Event.Images.EventLargeImagePortrait?._text,
-        "eventSmallImageLandscape": resJson.Events.Event.Images.EventSmallImageLandscape?._text,
-        "EventLargeImageLandscape": resJson.Events.Event.Images.EventLargeImageLandscape?._text,
+        "eventSmallImagePortrait": resJson.Events.Event.Images.EventSmallImagePortrait?._text || null,
+        "eventMediumImagePortrait": resJson.Events.Event.Images.EventMediumImagePortrait?._text || null,
+        "eventLargeImagePortrait": resJson.Events.Event.Images.EventLargeImagePortrait?._text || null,
+        "eventSmallImageLandscape": resJson.Events.Event.Images.EventSmallImageLandscape?._text || null,
+        "EventLargeImageLandscape": resJson.Events.Event.Images.EventLargeImageLandscape?._text || null,
       },
       "videos": {
         "title": resJson.Events.Event.Videos?.EventVideo?.Title._text,
@@ -75,7 +74,10 @@ async function fetchTheatreAreas() {
         "thumbnailLocation": resJson.Events.Event.Videos?.EventVideo?.ThumbnailLocation._text,
         "mediaResourceSubType": resJson.Events.Event.Videos?.EventVideo?.MediaResourceSubType._text,
         "mediaResourceFormat": resJson.Events.Event.Videos?.EventVideo?.MediaResourceFormat._text,
-      }
+      },
+      ...(Array.isArray(resJson.Events.Event.Cast.Actor) && {"cast": resJson.Events.Event.Cast.Actor.map(actor => {return { "firstName": actor.FirstName._text, "lastName": actor.LastName._text}})}),
+      ...(Array.isArray(resJson.Events.Event.Directors.Director) && {"directors": resJson.Events.Event.Directors.Director.map(director => {return { "firstName": director.FirstName._text, "lastName": director.LastName._text}})}),
+      ...(!Array.isArray(resJson.Events.Event.Directors.Director) && resJson.Events.Event.Directors.Director && {"directors":  [{ "firstName": resJson.Events.Event.Directors.Director.FirstName._text, "lastName": resJson.Events.Event.Directors.Director.LastName._text}]}),
     }
     return event;
   }

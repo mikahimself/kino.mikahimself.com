@@ -90,13 +90,13 @@ function App() {
         </select>  
       )}
       {shows && (
-        <select onChange={updateShows} value={selectedShow}>
+        <select onChange={updateShows} value={selectedShow.movieTitle}>
           <option value="null">Select show</option>
-          {shows.map(show => <option key={show.showId} value={show.showId} data-title={show.movieTitle} data-id={show.eventId}>{show.movieTitle} - {show.startTime}</option>)}
+          {shows.map(show => <option key={show.showId} value={show} data-title={show.movieTitle} data-id={show.eventId}>{show.movieTitle} - {show.startTime}</option>)}
         </select>  
       )}
       {showDetails && (
-        <p>{ showDetails.title }</p>
+        <p>{ JSON.stringify(showDetails) }</p>
       )}
     </div>
   );

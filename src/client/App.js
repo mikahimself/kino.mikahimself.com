@@ -1,7 +1,7 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import io from "socket.io-client";
-import xmljs from "xml-js";
+import { fetchAreaDate, fetchAreaDateShows, fetchEventDetails, fetchTheatreAreas } from './services/dataManager';
 
 const ENDPOINT = "http://localhost:3030";
 
@@ -10,7 +10,11 @@ function App() {
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const [selectedShow, setSelectedShow] = useState("");
+  const [showDetails, setShowDetails] = useState("");
+  const [shows, setShows] = useState([]);
   const [dates, setDates] = useState([]);
+  
   const socket = io(ENDPOINT);
   socket.on("connection", () => {
     console.log("Connected to server.")
@@ -18,42 +22,31 @@ function App() {
 
   useEffect(() => {
     let lsAreas = JSON.parse(window.localStorage.getItem("areas"));
-    async function fetchAreaDates(areas) {
-      for (let area of areas) {
-        let dates = await fetchAreaDate(area.id);
-        area.dates = dates;
-      }
-    }
 
     if (!lsAreas) {
-    async function fetchTheatreAreas() {
-      console.log("Fetch theatres")
-      let areaData = await fetch("https://www.finnkino.fi/xml/TheatreAreas/")
-      .then(response => response.text())
-      .then(data => JSON.parse(xmljs.xml2json(data, {compact: true, spaces: 4})))
-      .then(data => data.TheatreAreas.TheatreArea.map(entry => { return { "id": entry.ID._text, "name": entry.Name._text }}))
-      setAreas(await areaData);
-      window.localStorage.setItem("areas", JSON.stringify(await areaData))
-    };
-    fetchTheatreAreas();}
+      async function getAreas() {
+        const areaData = fetchTheatreAreas();
+        window.localStorage.setItem("areas", JSON.stringify(await areaData));
+        setAreas(await areaData);
+      }
+      getAreas();
+    }
     else {
-      console.log("use local storage")
       let lsAreas = JSON.parse(window.localStorage.getItem("areas"));
-      fetchAreaDates(lsAreas);
       setAreas(lsAreas);
     }
   }, []);
 
+  const getAreaDate = async(area) => {
+    setDates(await fetchAreaDate(area));
+  }
 
+  const getAreaShows = async(date) => {
+    setShows(await fetchAreaDateShows(selectedArea, date))
+  }
 
-  const fetchAreaDate = async(area) => {
-    let url = `https://www.finnkino.fi/xml/ScheduleDates/?area=${area}`;
-    let res = await fetch(url);
-    let resText = await res.text();
-    let resJson = await JSON.parse(xmljs.xml2json(resText, {compact: true, spaces: 4}));
-    let dates = await resJson.Dates.dateTime.map(date => date._text)
-    setDates(await dates);
-    return dates;
+  const getEventDetails = async(eventId) => {
+    setShowDetails(await fetchEventDetails(eventId))
   }
 
   const updateSelectedArea = (e) => {
@@ -61,11 +54,23 @@ function App() {
     const selection = e.target.options[selectedIndex].getAttribute('data-id');
     setSelectedArea(selection);
     setSelectedDate("");
-    fetchAreaDate(selection);
+    getAreaDate(selection);
   }
 
   const updateDates = (e) => {
     setSelectedDate(e.target.value);
+    getAreaShows(e.target.value);
+  }
+
+  const updateShows = (e) => {
+    console.log("Selected: " + e.target.value)
+    const selectedIndex = e.target.options.selectedIndex;
+    const selection = e.target.options[selectedIndex].getAttribute('data-title');
+    const eventId = e.target.options[selectedIndex].getAttribute('data-id');
+    console.log(selection)
+    setSelectedShow(selection)
+
+    getEventDetails(eventId);
   }
 
   return (
@@ -83,6 +88,15 @@ function App() {
           <option value="null">Select date</option>
           {dates.map(date => <option key={date} value={date}>{date}</option>)}
         </select>  
+      )}
+      {shows && (
+        <select onChange={updateShows} value={selectedShow}>
+          <option value="null">Select show</option>
+          {shows.map(show => <option key={show.showId} value={show.showId} data-title={show.movieTitle} data-id={show.eventId}>{show.movieTitle} - {show.startTime}</option>)}
+        </select>  
+      )}
+      {showDetails && (
+        <p>{ showDetails.title }</p>
       )}
     </div>
   );

@@ -15,11 +15,22 @@ function App() {
   const [shows, setShows] = useState([]);
   const [dates, setDates] = useState([]);
   const db = useRef(null)
-  
-  const socket = io(ENDPOINT);
-  socket.on("connection", () => {
-    console.log("Connected to server.")
-  });
+  const socket = useRef(null)
+  const [showNo, setShowNo] = useState(0);
+
+  useEffect(() => {
+    socket.current = io(ENDPOINT);
+    socket.current.on("connection", () => {
+      console.log("Connected to server.")
+    });
+  }, [])
+
+  useEffect(() => {
+    if (shows.length > 0) {
+      setSelectedShow(shows[0]);
+      getEventDetails(shows[0].eventId);
+    }
+  }, [shows]) 
 
   useEffect(() => {
     let lsAreas = JSON.parse(window.localStorage.getItem("areas"));
@@ -79,6 +90,26 @@ function App() {
     getEventDetails(eventId);
   }
 
+  const handleLikeClick = () => {
+    console.log(`Liked ${selectedShow.movieTitle} (${showNo}/${shows.length})`)
+    socket.current.emit("like", selectedShow.movieTitle);
+    if (showNo < shows.length){
+      setShowNo(showNo + 1);
+      setSelectedShow(shows[showNo])
+      getEventDetails(shows[showNo].eventId)
+    }
+  }
+  
+  const handleHateClick = () => {
+    console.log(`Hated ${selectedShow.movieTitle} (${showNo}/${shows.length})`)
+    socket.current.emit("hate", selectedShow.movieTitle);
+    if (showNo < shows.length){
+      setShowNo(showNo + 1);
+      setSelectedShow(shows[showNo])
+      getEventDetails(shows[showNo].eventId)
+    }
+  }
+
   return (
     <div className="App">
       <h1>It sorta works.</h1>
@@ -104,8 +135,8 @@ function App() {
       {showDetails && (
         <>
         <p>{ JSON.stringify(showDetails) }</p>
-        <button>Like</button>
-        <button>Hate</button>
+        <button onClick={handleLikeClick}>Like</button>
+        <button onClick={handleHateClick}>Hate</button>
         </>
       )}
     </div>

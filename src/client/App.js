@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import io from "socket.io-client";
 import { fetchAreaDate, fetchAreaDateShows, fetchEventDetails, fetchTheatreAreas } from './services/dataManager';
 
@@ -14,6 +14,7 @@ function App() {
   const [showDetails, setShowDetails] = useState("");
   const [shows, setShows] = useState([]);
   const [dates, setDates] = useState([]);
+  const db = useRef(null)
   
   const socket = io(ENDPOINT);
   socket.on("connection", () => {
@@ -22,9 +23,16 @@ function App() {
 
   useEffect(() => {
     let lsAreas = JSON.parse(window.localStorage.getItem("areas"));
+    db.current =  indexedDB.open("events");
+    db.current.onsuccess = (e) => {
+      console.log("success")
+    }
 
     if (!lsAreas) {
+        
+      
       async function getAreas() {
+
         const areaData = fetchTheatreAreas();
         window.localStorage.setItem("areas", JSON.stringify(await areaData));
         setAreas(await areaData);
@@ -67,9 +75,7 @@ function App() {
     const selectedIndex = e.target.options.selectedIndex;
     const selection = e.target.options[selectedIndex].getAttribute('data-title');
     const eventId = e.target.options[selectedIndex].getAttribute('data-id');
-    console.log(selection)
     setSelectedShow(selection)
-
     getEventDetails(eventId);
   }
 
@@ -96,7 +102,11 @@ function App() {
         </select>  
       )}
       {showDetails && (
+        <>
         <p>{ JSON.stringify(showDetails) }</p>
+        <button>Like</button>
+        <button>Hate</button>
+        </>
       )}
     </div>
   );

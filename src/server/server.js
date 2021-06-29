@@ -11,12 +11,15 @@ const io = require('socket.io')(httpServer, {
 io.on("connection", (socket) => {
     console.log("user connected: " + socket.id);
 
-    socket.on("like", (eventName) => {
-        console.log(`User ${socket.id} liked ${eventName}`)
-    })
-    
-    socket.on("hate", (eventName) => {
-        console.log(`User ${socket.id} hated ${eventName}`)
+    socket.on("reaction", (data) => {
+        const reaction = data[0];
+        const eventName = data[1];
+        const eventId = data[2];
+        if (reaction === 1) {
+            console.log(`User ${socket.id} liked ${eventName} (${eventId})`)
+        } else if (reaction === -1) {
+            console.log(`User ${socket.id} hated ${eventName} (${eventId})`)
+        }
     })
 })
 

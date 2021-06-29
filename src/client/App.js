@@ -92,7 +92,7 @@ function App() {
 
   const handleLikeClick = () => {
     console.log(`Liked ${selectedShow.movieTitle} (${showNo}/${shows.length})`)
-    socket.current.emit("like", selectedShow.movieTitle);
+    socket.current.emit("reaction", [1, selectedShow.movieTitle, selectedShow.eventId]);
     if (showNo < shows.length){
       setShowNo(showNo + 1);
       setSelectedShow(shows[showNo])
@@ -102,7 +102,7 @@ function App() {
   
   const handleHateClick = () => {
     console.log(`Hated ${selectedShow.movieTitle} (${showNo}/${shows.length})`)
-    socket.current.emit("hate", selectedShow.movieTitle);
+    socket.current.emit("reaction", [-1, selectedShow.movieTitle, selectedShow.eventId]);
     if (showNo < shows.length){
       setShowNo(showNo + 1);
       setSelectedShow(shows[showNo])

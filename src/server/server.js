@@ -1,5 +1,8 @@
 const app = require('express')();
 const httpServer = require('http').createServer(app);
+const data = require("nedb");
+const db = new data({ filename: "kino-reactions"});
+db.loadDatabase();
 
 const io = require('socket.io')(httpServer, {
     cors: {
@@ -20,6 +23,18 @@ io.on("connection", (socket) => {
         } else if (reaction === -1) {
             console.log(`User ${socket.id} hated ${eventName} (${eventId})`)
         }
+        db.find({user: socket.id, "reactions.eventId": eventId }, function(err, docs) {
+            if (err) {
+                console.log(err);
+            } else {
+                if (docs.length > 0 ) {
+                    console.log("Found: ", docs)
+                } else {
+                    console.log("Reaction not in db")
+                    db.insert({ user: socket.id, reactions: { eventId, reaction }});
+                }
+            }
+        })
     })
 })
 

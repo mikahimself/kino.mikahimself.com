@@ -40,10 +40,7 @@ function App() {
     }
 
     if (!lsAreas) {
-        
-      
       async function getAreas() {
-
         const areaData = fetchTheatreAreas();
         window.localStorage.setItem("areas", JSON.stringify(await areaData));
         setAreas(await areaData);
